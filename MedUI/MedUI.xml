@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE MudletPackage>
+<MudletPackage version="1.001">
+	<ScriptPackage>
+		<ScriptGroup isActive="yes" isFolder="yes">
+			<name>MedUI1.2</name>
+			<packageName>MedUI1.2</packageName>
+			<script></script>
+			<eventHandlerList />
+			<ScriptGroup isActive="yes" isFolder="yes">
+				<name>MedUI</name>
+				<packageName>MedUI</packageName>
+				<script></script>
+				<eventHandlerList />
+				<ScriptGroup isActive="yes" isFolder="yes">
+					<name>Medievia</name>
+					<packageName>MedUI</packageName>
+					<script></script>
+					<eventHandlerList />
+					<ScriptGroup isActive="yes" isFolder="yes">
+						<name>CSSman</name>
+						<packageName>CSSman</packageName>
+						<script></script>
+						<eventHandlerList />
+						<Script isActive="yes" isFolder="no">
+							<name>CSSMan</name>
+							<packageName></packageName>
+							<script>-- CSSMan by Vadi. Public domain.
+
+CSSMan = {}
+CSSMan.__index = CSSMan
+
+function CSSMan.new(stylesheet)
+  local obj  = { stylesheet = {} }
+  setmetatable(obj,CSSMan)
+  local trim = string.trim
+
+  assert(type(stylesheet) == "string", "CSSMan.new: no stylesheet provided. A possible error is that you might have used CSSMan.new, not CSSMan:new")
+
+  for line in stylesheet:gmatch("[^\r\n]+") do
+    local attribute, value = line:match("^(.-):(.-);$")
+    if attribute and value then
+      attribute, value = trim(attribute), trim(value)
+      obj.stylesheet[attribute] = value
+    end
+  end
+
+  return obj
+end
+
+function CSSMan:set(key, value)
+  self.stylesheet[key] = value
+end
+
+function CSSMan:get(key)
+  return self.stylesheet[key]
+end
+
+function CSSMan:getCSS(key)
+  local lines, concat = {}, table.concat
+  for k,v in pairs(self.stylesheet) do lines[#lines+1] = concat({k,": ", v, ";"}) end
+  return concat(lines, "\n")
+end
+
+function CSSMan:gettable()
+  return self.stylesheet
+end
+
+function CSSMan:settable(tbl)
+  assert(type(tbl) == "table", "CSSMan:settable: table expected, got "..type(tbl))
+
+  self.stylesheet = tbl
+end</script>
+							<eventHandlerList />
+						</Script>
+					</ScriptGroup>
+					<ScriptGroup isActive="yes" isFolder="yes">
+						<name>GUI</name>
+						<packageName></packageName>
+						<script>GUI = GUI or {}
+</script>
+						<eventHandlerList />
+						<Script isActive="yes" isFolder="no">
+							<name>Main</name>
+							<packageName></packageName>
+							<script>
+local version = "1.2.0"
+local w,h = getMainWindowSize()
+setBorderRight(w/3.3)
+
+
+GUI.BoxCSS = CSSMan.new([[
+  background-color: rgba(0,0,0,100);
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 10px;
+  border-color: white;
+  margin: 10px;
+]])
+
+--[[
+GUI.Box1 = Geyser.Label:new({
+  name = "GUI.Box1",
+  x = 0, y = 0,
+  width = "100%",
+  height = "50%",
+},GUI.Right)
+GUI.Box1:setStyleSheet(GUI.BoxCSS:getCSS())
+GUI.Box1:echo("&lt;center&gt;GUI.Box1")
+
+GUI.Box2 = Geyser.Label:new({
+  name = "GUI.Box2",
+  x = 0, y = "50%",
+  width = "100%",
+  height = "50%",
+},GUI.Right)
+GUI.Box2:setStyleSheet(GUI.BoxCSS:getCSS())
+GUI.Box2:echo("&lt;center&gt;GUI.Box2")
+]]--
+
+MedUI = MedUI or {}
+MedUI.MedChat = MedUI.MedChat or {}
+
+function MedUI.InitMedChat()
+  -- create some variable space so we don't pollute global variables
+  
+  local EMCO = require("MDK.emco")
+  local stylesheet = [[background-color: rgb(0,255,255,255); border-width: 1px; border-style: solid; border-color: gold; border-radius: 10px;]]
+  local istylesheet = [[background-color: rgb(60,0,0,255); border-width: 1px; border-style: solid; border-color: gold; border-radius: 10px;]]
+  --local medchatstylesheet = [[background-color: rgb(255,255,255,255); border-width: 1px; border-style: solid; border-color: gold; border-radius: 10px;]]
+  -- create an adjustable container for more flexibility
+  MedUI.MedChat.Left = Adjustable.Container:new({
+    name = "MedChat",
+    x = "60%", y = "30%",
+    width = "25%",
+    height = "50%",
+    lockStyle = "border",
+    adjLabelstyle = "background-color:darkred; border: 0; padding: 1px;",
+    autoLoad = true,
+    autoSave = true
+  })
+  MedUI.MedChat.Left:lockContainer("light")
+
+  testEMCO = testEMCO or EMCO:new({
+    x = "0",
+    y = "0",
+    width = "100%",
+    height = "100%",
+    allTab = true,
+    allTabName = "All",
+    gap = 2,
+    consoleColor = "black",
+    consoles = {
+      "All",
+      "Form",
+      "Clan", 
+      "Town",
+      "Chat",
+      "MMCP",
+    },
+    --mapTabName = "Map",
+    --mapTab = true,
+    activeTabCSS = stylesheet,
+    inactiveTabCSS = istylesheet,
+  }, MedUI.MedChat.Left)
+
+end
+
+function MedUI.eventHandler(event, ...)
+  if event == "sysWindowResizeEvent" then
+    local x, y, windowName = arg[1], arg[2], arg[3]
+    
+    if windowName == "main" then
+      --cecho(string.format("\nwindow: %s, x: %d, y: %d", windowName, x, y))
+      
+      local w,h = getMainWindowSize()
+      setBorderRight(w/3.3)
+      
+    end
+  
+  elseif event == "sysMMCPMessage" then
+    testEMCO:decho("MMCP", ansi2decho(arg[1]), false)
+  end
+end
+
+MedUI.registeredEvents = {
+  registerAnonymousEventHandler("sysWindowResizeEvent", "MedUI.eventHandler"),
+  registerAnonymousEventHandler("sysMMCPMessage", "MedUI.eventHandler")
+}
+
+--Test MiniConsole for Map 
+-- a miniconsole example
+
+-- first, determine the size of your screen
+--[[
+local windowWidth, windowHeight = getMainWindowSize()
+createMiniConsole("sys", windowWidth-475,0,650,400)
+setBackgroundColor("sys",0,0,0,0)
+setMiniConsoleFontSize("sys", 8)
+setWindowWrap("sys", 80)
+]]--
+--[[
+echo("sys","Hello world!\n")
+cecho("sys", "&lt;:OrangeRed&gt;This is random spam with the same background\n")
+cecho("sys", "&lt;blue:OrangeRed&gt;and this is with a blue foreground. ")
+cecho("sys", "&lt;bisque:BlueViolet&gt;Lastly, this is with both a foreground and a background.\n")
+]]--
+
+MedUI.MedMap = MedUI.MedMap or {}
+--local medchatstylesheet = [[background-color: rgb(255,255,255,255); border-width: 1px; border-style: solid; border-color: gold; border-radius: 10px;]]
+-- create an adjustable container for more flexibility
+MedUI.MedMap.MapperAdjCont = Adjustable.Container:new({
+  name = "Medieiva Map",
+  x = "40%", y = "5%",
+  width = 600,
+  height = "50%",
+  lockStyle = "border",
+  adjLabelstyle = "background-color:darkred; border: 0; padding: 1px;",
+  autoLoad = true,
+  autoSave = true
+})
+--MedMap.MapperAdjCont:lockContainer("light")
+
+
+MedUI.MedMap.Mapper = Geyser.MiniConsole:new({
+    name="MedMapper",
+    x= 0, y= 0,
+    autoWrap = false,
+    color = "black",
+    scrollBar = true,
+    fontSize = 9,
+    width="100%", height="100%",
+  },
+  MedUI.MedMap.MapperAdjCont
+)
+
+MedUI.MedMap.Mapper:setFont("Medievia Sans Mono")
+
+
+
+--Builds the icons for buffs the first time
+--med_initializeBuffTable() -- Table_Spell_Effects
+--med_initializeEffects() --SpellEffects
+--med_clearEffects()
+MedUI.InitMedChat()
+
+</script>
+							<eventHandlerList />
+						</Script>
+					</ScriptGroup>
+					<ScriptGroup isActive="yes" isFolder="yes">
+						<name>Data</name>
+						<packageName></packageName>
+						<script></script>
+						<eventHandlerList />
+						<Script isActive="no" isFolder="no">
+							<name>Table_Spell_Effects</name>
+							<packageName></packageName>
+							<script>--Stores the location reference of the PNG for each buff and debuff
+--Use with getMudletHomeDir() to get full path
+function med_initializeBuffTable()
+  buffIconTable = {
+    sanc = {"/MedUI/icons/sanc.png", false, "spell_label_sanc", "buff", "ref_place_holder"},
+    armor = {"/MedUI/icons/armor.png", false, "spell_label_armor", "buff", "ref_place_holder"},
+    bless = {"/MedUI/icons/bless.png", false, "spell_label_bless", "buff", "ref_place_holder"},
+    fireshield = {"/MedUI/icons/fireshield.png", false, "spell_label_fireshield", "buff", "ref_place_holder"},
+    blind = {"/MedUI/icons/blind.png", false, "spell_label_blind", "debuff", "ref_place_holder"},
+    quickness = {"/MedUI/icons/quickness.png", false, "spell_label_quickness", "buff", "ref_place_holder"},
+    protfire = {"/MedUI/icons/prot_fire.png", false, "spell_label_protfire", "buff", "ref_place_holder"},
+    protice = {"/MedUI/icons/prot_ice.png", false, "spell_label_protice", "buff", "ref_place_holder"},
+    protlightning = {"/MedUI/icons/prot_lightning.png", false, "spell_label_protlightning", "buff", "ref_place_holder"},
+    levitate = {"/MedUI/icons/levitate.png", false, "spell_label_levitate", "buff", "ref_place_holder"}, 
+    manashield = {"/MedUI/icons/manashield.png", false, "spell_label_manashield", "buff", "ref_place_holder"},
+    infravision = {"/MedUI/icons/infravision.png", false, "spell_label_infravision", "buff", "ref_place_holder"},
+    detectevil = {"/MedUI/icons/detect_evil.png", false, "spell_label_detectevil", "buff", "ref_place_holder"},
+    detectgood = {"/MedUI/icons/detect_good.png", false, "spell_label_detectgood", "buff", "ref_place_holder"},
+    detectinv = {"/MedUI/icons/detect_inv.png", false, "spell_label_detectinv", "buff", "ref_place_holder"},
+    detectmagic = {"/MedUI/icons/detect_magic.png", false, "spell_label_detectmagic", "buff", "ref_place_holder"},
+    stoneskin = {"/MedUI/icons/stoneskin_shield.png", false, "spell_label_stoneskin", "buff", "ref_place_holder"},
+    strength = {"/MedUI/icons/strength.png", false, "spell_label_strength", "buff", "ref_place_holder"},
+    senselife = {"/MedUI/icons/senselife.png", false, "spell_label_senselife", "buff", "ref_place_holder"},
+    shield = {"/MedUI/icons/shield.png", false, "spell_label_shield", "buff", "ref_place_holder"},
+    protfromgood = {"/MedUI/icons/protfromgood.png", false, "spell_label_protfromgood", "buff", "ref_place_holder"}           
+  }
+end
+
+</script>
+							<eventHandlerList />
+						</Script>
+						<Script isActive="yes" isFolder="no">
+							<name>MedVariables</name>
+							<packageName></packageName>
+							<script>--This will store variables used in triggers/alias's. Dont delete.
+MedVar = {}</script>
+							<eventHandlerList />
+						</Script>
+					</ScriptGroup>
+					<Script isActive="no" isFolder="no">
+						<name>HelpFile</name>
+						<packageName></packageName>
+						<script>-- lua resetProfile() - reset gui without closing
+-- lua getMudletHomeDir() - gets the home directory of profile
+--med_updateEffects()
+</script>
+						<eventHandlerList />
+					</Script>
+				</ScriptGroup>
+			</ScriptGroup>
+			<ScriptGroup isActive="yes" isFolder="yes">
+				<name>UOMap</name>
+				<packageName></packageName>
+				<script></script>
+				<eventHandlerList />
+				<Script isActive="yes" isFolder="no">
+					<name>UOMapping</name>
+					<packageName></packageName>
+					<script></script>
+					<eventHandlerList />
+				</Script>
+				<Script isActive="yes" isFolder="no">
+					<name>Table_UOMap</name>
+					<packageName></packageName>
+					<script>--Stores the location reference of the PNG for each buff and debuff
+--Use with getMudletHomeDir() to get full path
+function uomap_setUOCords(xuo, yuo, zuo)
+
+end
+
+</script>
+					<eventHandlerList />
+				</Script>
+				<Script isActive="yes" isFolder="no">
+					<name>UO_Main</name>
+					<packageName></packageName>
+					<script>MedUO = MedUO or {}
+
+function MedUO:Main()
+
+  MedUO.UOMapTable = {
+   ["x"] = 0,
+   ["y"] = 0,
+   ["z"] = 0
+  }
+  
+  -- Create  array
+  --[[
+  MedUO.grid = {}
+  for i = 1, 3 do
+      grid[i] = {}
+  
+      for j = 1, 5 do
+          grid[i][j] = 0 -- Fill the values here
+      end
+  end
+  ]]--
+
+
+end
+
+function MedUO:addcords()
+
+end
+
+
+function MedUO:savemap()
+
+  --echo('testmain')
+  
+  local file = io.open("C://Users//beroo//.config//mudlet//profiles//Medievia1//test.txt", "w")
+  if file then
+    local writeLine = MedUO.UOMapTable.x..","..MedUO.UOMapTable.y..","..MedUO.UOMapTable.z
+    file:write(writeLine);
+    file:close()
+  else
+    echo('cannot access file')
+  end
+  
+end
+
+
+MedUO:Main()
+
+--echo(UOMapTable.x)
+
+
+</script>
+					<eventHandlerList />
+				</Script>
+			</ScriptGroup>
+		</ScriptGroup>
+	</ScriptPackage>
+</MudletPackage>
